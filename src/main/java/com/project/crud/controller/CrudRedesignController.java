@@ -261,8 +261,9 @@ public class CrudRedesignController implements Initializable  {
             boolean ageIsNumber = checkIfNumber( ageField.getText().trim() );
 
             if ( studentIdIsNumber && ageIsNumber ) {
-//                boolean isDuplicate = checkDuplicate( studentIdField.getText() );
+                boolean isDuplicate = db.checkIfDuplicate( Integer.parseInt( studentIdField.getText().trim() ) );
 
+                if ( !isDuplicate ) {
                     int studentId = Integer.parseInt( studentIdField.getText().trim() );
                     String firstName = firstNameField.getText().trim();
                     String lastName = lastNameField.getText().trim();
@@ -290,6 +291,18 @@ public class CrudRedesignController implements Initializable  {
                     dialog.getStyleClass().add( "dialog" );
 
                     alert.showAndWait();
+                } else {
+                    Alert alert = new Alert( Alert.AlertType.WARNING );
+                    alert.setTitle( "Warning!" );
+                    alert.setHeaderText( "A duplicate entry has been found." );
+                    alert.setContentText( "You should edit the entry instead." );
+
+                    DialogPane dialog = alert.getDialogPane();
+                    dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css" ) ).toString() );
+                    dialog.getStyleClass().add( "dialog" );
+
+                    alert.showAndWait();
+                }
             } else if ( !studentIdIsNumber ) {
                 Alert alert = new Alert( Alert.AlertType.WARNING );
                 alert.setTitle( "Warning!" );
@@ -434,28 +447,6 @@ public class CrudRedesignController implements Initializable  {
 //
 //    }
 
-    boolean checkDuplicate( String studentNumber ) throws IOException {
-        boolean isDuplicate = false;
-
-        try {
-            read = new BufferedReader( new FileReader( "database/students-list.txt" ) );
-
-            String s;
-            while ( ( s = read.readLine() ) != null ) {
-                if ( Pattern.compile( studentNumber ).matcher( s ).find() ) {
-                    isDuplicate = true;
-                    break;
-                }
-            }
-        } catch( IOException err ) {
-            System.err.println( "Warning! IOException has occurred at checkDuplicate() function: " + err.getMessage() );
-        } finally {
-            if ( read != null ) read.close();
-        }
-
-        return isDuplicate;
-    }
-
     @FXML
     void editStudent() throws IOException {
         boolean success = false;
@@ -589,39 +580,40 @@ public class CrudRedesignController implements Initializable  {
 
     @FXML
     void searchStudents() throws IOException {
-        List< Student > students = new ArrayList<>();
-
-        if ( !searchField.getText().trim().isEmpty() ) {
-            Task< Void > searchStudentsTask = new Task<Void>() {
-                @Override
-                protected Void call() throws Exception {
-
-                    try {
-                        read = new BufferedReader(new FileReader("database/students-list.txt"));
-                        String pattern = searchField.getText().replaceAll(" +", "|");
-                        String s;
-                        while ((s = read.readLine()) != null) {
-                            if (!Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(s).find()) continue;
-
-                            String[] entry = s.split("&");
-                            students.add(new Student(Integer.parseInt(entry[0]), entry[1], entry[2], Integer.parseInt(entry[3]), Integer.parseInt(entry[4]), entry[5], entry[6], entry[7]));
-                        }
-
-                            addStudents(students);
-                        } catch(IOException err ){
-                            System.err.println("Warning! IOException has occurred at searchStudents() function: " + err.getMessage());
-                        } finally{
-                            if (read != null) read.close();
-                        }
-
-                        return null;
-                    }
-                };
-
-            searchStudentsTask.run();
-        } else {
-            addStudents( getStudents() );
-        }
+        System.out.println( db.checkIfDuplicate( Integer.parseInt( searchField.getText().trim() ) ) );
+//        List< Student > students = new ArrayList<>();
+//
+//        if ( !searchField.getText().trim().isEmpty() ) {
+//            Task< Void > searchStudentsTask = new Task<Void>() {
+//                @Override
+//                protected Void call() throws Exception {
+//
+//                    try {
+//                        read = new BufferedReader(new FileReader("database/students-list.txt"));
+//                        String pattern = searchField.getText().replaceAll(" +", "|");
+//                        String s;
+//                        while ((s = read.readLine()) != null) {
+//                            if (!Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(s).find()) continue;
+//
+//                            String[] entry = s.split("&");
+//                            students.add(new Student(Integer.parseInt(entry[0]), entry[1], entry[2], Integer.parseInt(entry[3]), Integer.parseInt(entry[4]), entry[5], entry[6], entry[7]));
+//                        }
+//
+//                            addStudents(students);
+//                        } catch(IOException err ){
+//                            System.err.println("Warning! IOException has occurred at searchStudents() function: " + err.getMessage());
+//                        } finally{
+//                            if (read != null) read.close();
+//                        }
+//
+//                        return null;
+//                    }
+//                };
+//
+//            searchStudentsTask.run();
+//        } else {
+//            addStudents( getStudents() );
+//        }
     }
 
     @FXML
