@@ -6,10 +6,4 @@ If you want to check out the original, you can find it on my `Repositories` or [
 # Screenshots
 ![](screenshots/program-overview.png)
 
-![](screenshots/add-panel.png)
-
-![](screenshots/edit-panel.png)
-
-![](screenshots/delete-panel.png)
-
-![](screenshots/read-student.png)
+![](screenshots/db-preview.png)
