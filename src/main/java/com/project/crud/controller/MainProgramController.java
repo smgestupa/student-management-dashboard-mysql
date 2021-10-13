@@ -1,5 +1,6 @@
 package com.project.crud.controller;
 
+import com.project.crud.database.Database;
 import com.project.crud.listener.Listen;
 import com.project.crud.model.Student;
 import javafx.application.Platform;
@@ -24,7 +25,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class CrudRedesignController implements Initializable  {
+public class MainProgramController implements Initializable  {
 
     ObservableList< String > yearLevelList = FXCollections.observableArrayList( "1", "2", "3", "4" );
     ObservableList< String > genderList = FXCollections.observableArrayList( "Male", "Female" );
@@ -62,11 +63,12 @@ public class CrudRedesignController implements Initializable  {
     private Student selectedStudent;
     private Listen listener;
 
-    BufferedReader read = null;
-    BufferedWriter write = null;
+    Database db;
 
     @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
+    public void initialize( URL url, ResourceBundle resourceBundle ) {
+        db = new Database();
+
         yearLevelBox.getItems().addAll( yearLevelList );
         genderBox.getItems().addAll( genderList );
         programBox.getItems().addAll( programList );
@@ -76,46 +78,11 @@ public class CrudRedesignController implements Initializable  {
         sortingBox.getItems().addAll( sortingList );
         sortingBox.getSelectionModel().select( 0 );
 
-        try {
-            addStudents( getStudents() );
-        } catch ( IOException err ) {
-            System.err.println( "Warning! IOException has occurred at initialize() function: " + err.getMessage() );
-        }
+        addStudents( getStudents() );
     }
 
-    public List< Student > getStudents() throws IOException {
-        List< Student > studentEntries = new ArrayList<>();
-
-        Task< Void > getStudentsTask = new Task< Void >() {
-            @Override
-            protected Void call() throws Exception {
-
-                List< Student > students = new ArrayList<>();
-
-                try {
-                    read = new BufferedReader( new FileReader( "database/students-list.txt" ) );
-
-                    String s;
-                    while ( ( s = read.readLine() ) != null ) {
-                        if ( s.trim().isEmpty() ) continue;
-
-                        String[] entry = s.split( "&" );
-                        students.add( new Student( Integer.parseInt( entry[0] ), entry[1], entry[2], Integer.parseInt( entry[3] ), Integer.parseInt( entry[4] ), entry[5], entry[6], entry[7] ) );
-                    }
-                } catch ( IOException err ) {
-                    System.err.println( "Warning! IOException has occurred at getStudents() function: " + err.getMessage() );
-                } finally {
-                    if ( read != null ) read.close();
-                    studentEntries.addAll( students );
-                }
-
-                return null;
-            }
-        };
-
-        getStudentsTask.run();
-
-        return studentEntries;
+    public List< Student > getStudents() {
+        return db.getStudents();
     }
 
     public void addStudents( List< Student > list ) {
@@ -239,29 +206,29 @@ public class CrudRedesignController implements Initializable  {
     }
 
     @FXML
-    void addStudent() throws IOException {
+    void addStudent() {
         boolean isFilledOut =
                 !studentIdField.getText().trim().isEmpty() &&
-                !firstNameField.getText().trim().isEmpty() &&
-                !lastNameField.getText().trim().isEmpty() &&
-                !yearLevelBox.getSelectionModel().isEmpty() &&
-                !ageField.getText().trim().isEmpty() &&
-                !genderBox.getSelectionModel().isEmpty() &&
-                !programBox.getSelectionModel().isEmpty();
+                        !firstNameField.getText().trim().isEmpty() &&
+                        !lastNameField.getText().trim().isEmpty() &&
+                        !yearLevelBox.getSelectionModel().isEmpty() &&
+                        !ageField.getText().trim().isEmpty() &&
+                        !genderBox.getSelectionModel().isEmpty() &&
+                        !programBox.getSelectionModel().isEmpty();
 
         if ( isFilledOut ) {
             boolean studentIdIsNumber = checkIfNumber( studentIdField.getText().trim() );
             boolean ageIsNumber = checkIfNumber( ageField.getText().trim() );
 
             if ( studentIdIsNumber && ageIsNumber ) {
-                boolean isDuplicate = checkDuplicate( studentIdField.getText() );
+                boolean isDuplicate = db.checkIfDuplicate( Integer.parseInt( studentIdField.getText().trim() ) );
 
                 if ( !isDuplicate ) {
-                    String studentId = studentIdField.getText().trim();
+                    int studentId = Integer.parseInt( studentIdField.getText().trim() );
                     String firstName = firstNameField.getText().trim();
                     String lastName = lastNameField.getText().trim();
-                    String yearLevel = yearLevelBox.getValue();
-                    String age = ageField.getText().trim();
+                    int yearLevel = Integer.parseInt( yearLevelBox.getValue() );
+                    int age = Integer.parseInt( ageField.getText().trim() );
                     String gender = genderBox.getValue();
                     String program = programBox.getValue();
                     String imagePath = "null";
@@ -272,16 +239,7 @@ public class CrudRedesignController implements Initializable  {
                         }
                     }
 
-                    try {
-                        write = new BufferedWriter( new FileWriter( "database/students-list.txt", true ) );
-                        write.append( studentId + "&" + firstName + "&" + lastName + "&" + yearLevel + "&" + age + "&" + gender + "&" + program + "&" + imagePath );
-                        write.append( "\n" );
-                    } catch ( IOException err ) {
-                        System.err.println( "Warning! IOException has occurred at addStudent() function: " + err.getMessage() );
-                    } finally {
-                        if ( write != null ) write.close();
-                    }
-
+                    db.insertStudent( studentId, firstName, lastName, yearLevel, age, gender, program, imagePath );
                     addStudents( getStudents() );
                     closePane();
 
@@ -344,106 +302,55 @@ public class CrudRedesignController implements Initializable  {
 
     }
 
-    boolean checkDuplicate( String studentNumber ) throws IOException {
-        boolean isDuplicate = false;
+    @FXML
+    void editStudent() {
+        boolean success = false;
+        boolean ageIsNumber = checkIfNumber( editAgeField.getText().trim() );
 
-        try {
-            read = new BufferedReader( new FileReader( "database/students-list.txt" ) );
+        if ( ageIsNumber ) {
+            String firstName = ( !editFirstNameField.getText().trim().isEmpty() ) ? editFirstNameField.getText().trim() : selectedStudent.getFirstName();
+            String lastName = ( !editLastNameField.getText().trim().isEmpty() ) ? editLastNameField.getText().trim() : selectedStudent.getLastName();
+            int yearLevel = ( !editYearLevelBox.getSelectionModel().isEmpty() ) ? Integer.parseInt( editYearLevelBox.getValue() ): selectedStudent.getYearLevel();
+            int age = ( !editAgeField.getText().trim().isEmpty() ) ? Integer.parseInt( editAgeField.getText().trim() ) :  selectedStudent.getAge();
+            String gender = ( !editGenderBox.getSelectionModel().isEmpty() ) ? editGenderBox.getValue() : selectedStudent.getGender();
+            String program = ( !editProgramBox.getSelectionModel().isEmpty() ) ? editProgramBox.getValue() : selectedStudent.getProgram();
+            String image = (editStudentImage.getImage().getUrl() != null) ? editStudentImage.getImage().getUrl() : "null";
 
-            String s;
-            while ( ( s = read.readLine() ) != null ) {
-                if ( Pattern.compile( studentNumber ).matcher( s ).find() ) {
-                    isDuplicate = true;
-                    break;
-                }
-            }
-        } catch( IOException err ) {
-            System.err.println( "Warning! IOException has occurred at checkDuplicate() function: " + err.getMessage() );
-        } finally {
-            if ( read != null ) read.close();
+            selectedStudent = new Student( selectedStudent.getStudentNumber(), firstName, lastName,  yearLevel,  age, gender, program , image );
+            db.updateStudent( selectedStudent.getStudentNumber(), firstName, lastName, yearLevel, age, gender, program, image );
+
+            success = true;
+        } else {
+            Alert alert = new Alert( Alert.AlertType.WARNING );
+            alert.setTitle( "Warning!" );
+            alert.setHeaderText( "The student's age must be a number." );
+            alert.setContentText( "Please try again." );
+
+            DialogPane dialog = alert.getDialogPane();
+            dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
+            dialog.getStyleClass().add( "dialog" );
+
+            alert.showAndWait();
         }
 
-        return isDuplicate;
-    }
+        if ( success ) {
+            searchStudents();
+            closePane();
 
-    @FXML
-    void editStudent() throws IOException {
-        boolean success = false;
+            Alert alert = new Alert( Alert.AlertType.INFORMATION );
+            alert.setTitle( "Success!" );
+            alert.setHeaderText( "You have successfully edited a student entry." );
 
-        try {
-            read = new BufferedReader( new FileReader( "database/students-list.txt" ) );
-            StringBuilder fileContent = new StringBuilder();
+            DialogPane dialog = alert.getDialogPane();
+            dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
+            dialog.getStyleClass().add( "dialog" );
 
-            boolean ageIsNumber = checkIfNumber( editAgeField.getText().trim() );
-
-            if ( ageIsNumber ) {
-                    String s;
-                    while ((s = read.readLine()) != null) {
-                        if (Pattern.compile(String.valueOf(selectedStudent.getStudentNumber())).matcher(s).find()) {
-                            String firstName = (!editFirstNameField.getText().trim().isEmpty()) ? editFirstNameField.getText().trim() : selectedStudent.getFirstName();
-                            String lastName = (!editLastNameField.getText().trim().isEmpty()) ? editLastNameField.getText().trim() : selectedStudent.getLastName();
-                            String yearLevel = (!editYearLevelBox.getSelectionModel().isEmpty()) ? editYearLevelBox.getValue() : String.valueOf(selectedStudent.getYearLevel());
-                            String age = (!editAgeField.getText().trim().isEmpty()) ? editAgeField.getText().trim() : String.valueOf(selectedStudent.getAge());
-                            String gender = (!editGenderBox.getSelectionModel().isEmpty()) ? editGenderBox.getValue() : selectedStudent.getGender();
-                            String program = (!editProgramBox.getSelectionModel().isEmpty()) ? editProgramBox.getValue() : selectedStudent.getProgram();
-
-                            String image = (editStudentImage.getImage().getUrl() != null) ? editStudentImage.getImage().getUrl() : "null";
-
-                            selectedStudent = new Student( selectedStudent.getStudentNumber(), firstName, lastName, Integer.parseInt( yearLevel ), Integer.parseInt( age ), gender, program , image );
-
-                            fileContent.append( selectedStudent.getStudentNumber() + "&" + firstName + "&" + lastName + "&" + yearLevel + "&" + age + "&" + gender + "&" + program + "&" + image );
-                            fileContent.append("\n");
-
-                            continue;
-                        }
-
-                        fileContent.append(s);
-                        fileContent.append("\n");
-                    }
-
-                    write = new BufferedWriter(new FileWriter("database/students-list.txt"));
-                    write.write(fileContent.toString());
-
-                    success = true;
-            } else {
-                Alert alert = new Alert( Alert.AlertType.WARNING );
-                alert.setTitle( "Warning!" );
-                alert.setHeaderText( "The student's age must be a number." );
-                alert.setContentText( "Please try again." );
-
-                DialogPane dialog = alert.getDialogPane();
-                dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
-                dialog.getStyleClass().add( "dialog" );
-
-                alert.showAndWait();
-            }
-        } catch ( IOException err ) {
-            System.err.println( "Warning! IOException has occurred at editStudent() function: " + err.getMessage() );
-        } finally {
-            if ( read != null ) read.close();
-            if ( write != null ) write.close();
-
-            if ( success ) {
-                searchStudents();
-                closePane();
-
-                Alert alert = new Alert( Alert.AlertType.INFORMATION );
-                alert.setTitle( "Success!" );
-                alert.setHeaderText( "You have successfully edited a student entry." );
-
-                DialogPane dialog = alert.getDialogPane();
-                dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
-                dialog.getStyleClass().add( "dialog" );
-
-                alert.showAndWait();
-            }
+            alert.showAndWait();
         }
     }
 
     @FXML
     void confirmDeleteStudent() throws IOException {
-        boolean success = false;
-
         Alert confirm = new Alert( Alert.AlertType.CONFIRMATION );
         confirm.setTitle( "Confirmation Required" );
         confirm.setHeaderText( "Would you like to delete " + selectedStudent.getFirstName() + "'s entry?" );
@@ -454,88 +361,39 @@ public class CrudRedesignController implements Initializable  {
 
         Optional< ButtonType > result = confirm.showAndWait();
         if ( result.get() == ButtonType.OK) {
-            try {
-                read = new BufferedReader( new FileReader( "database/students-list.txt" ) );
-                StringBuilder newFileContent = new StringBuilder();
+            db.removeStudent( selectedStudent.getStudentNumber() );
 
-                String s;
-                while ( ( s = read.readLine() ) != null ) {
-                    if ( Pattern.compile( String.valueOf( selectedStudent.getStudentNumber() ) ).matcher( s ).find() ) continue;
+            List< Student > updatedList = new ArrayList<>( students );
+            updatedList.remove( selectedStudent );
+            addStudents( updatedList );
+            closePane();
+            selectedStudent = null;
 
-                    newFileContent.append( s );
-                    newFileContent.append( "\n" );
-                }
+            Alert alert = new Alert( Alert.AlertType.INFORMATION );
+            alert.setTitle( "Success!" );
+            alert.setHeaderText( "You have successfully deleted a student entry." );
 
-                write = new BufferedWriter( new FileWriter( "database/students-list.txt" ) );
-                write.write( newFileContent.toString() );
+            DialogPane dialogSuccess = alert.getDialogPane();
+            dialogSuccess.getStylesheets().add( Objects.requireNonNull( getClass().getResource("/com/project/crud/styles/styles.css") ).toString() );
+            dialogSuccess.getStyleClass().add( "dialog" );
 
-                success = true;
-            } catch ( IOException err ) {
-                System.err.println( "Warning! IOException has occurred at confirmDeleteStudent() function: " + err.getMessage() );
-            } finally {
-                if ( read != null ) read.close();
-                if ( write != null ) write.close();
-
-                if ( success ) {
-                    List< Student > updatedList = new ArrayList<>( students );
-                    updatedList.remove( selectedStudent );
-                    addStudents( updatedList );
-                    closePane();
-                    selectedStudent = null;
-
-                    Alert alert = new Alert( Alert.AlertType.INFORMATION );
-                    alert.setTitle( "Success!" );
-                    alert.setHeaderText( "You have successfully deleted a student entry." );
-
-                    DialogPane dialogSuccess = alert.getDialogPane();
-                    dialogSuccess.getStylesheets().add( Objects.requireNonNull( getClass().getResource("/com/project/crud/styles/styles.css") ).toString() );
-                    dialogSuccess.getStyleClass().add( "dialog" );
-
-                    alert.showAndWait();
-                }
-            }
+            alert.showAndWait();
         }
     }
 
     @FXML
-    void searchStudents() throws IOException {
-        List< Student > students = new ArrayList<>();
-
-        if ( !searchField.getText().trim().isEmpty() ) {
-            Task< Void > searchStudentsTask = new Task<Void>() {
-                @Override
-                protected Void call() throws Exception {
-
-                    try {
-                        read = new BufferedReader(new FileReader("database/students-list.txt"));
-                        String pattern = searchField.getText().replaceAll(" +", "|");
-                        String s;
-                        while ((s = read.readLine()) != null) {
-                            if (!Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(s).find()) continue;
-
-                            String[] entry = s.split("&");
-                            students.add(new Student(Integer.parseInt(entry[0]), entry[1], entry[2], Integer.parseInt(entry[3]), Integer.parseInt(entry[4]), entry[5], entry[6], entry[7]));
-                        }
-
-                            addStudents(students);
-                        } catch(IOException err ){
-                            System.err.println("Warning! IOException has occurred at searchStudents() function: " + err.getMessage());
-                        } finally{
-                            if (read != null) read.close();
-                        }
-
-                        return null;
-                    }
-                };
-
-            searchStudentsTask.run();
-        } else {
+    void searchStudents() {
+        if ( searchField.getText().trim().isEmpty() ) {
             addStudents( getStudents() );
+            return;
         }
+
+        String pattern = searchField.getText().trim().replaceAll( " +", "|" );
+        addStudents( db.searchStudents( pattern ) );
     }
 
     @FXML
-    void sortStudents() throws IOException {
+    void sortStudents() {
         List< Student > currentList = new ArrayList<>();
         currentList.addAll( students );
         addStudents( currentList );
