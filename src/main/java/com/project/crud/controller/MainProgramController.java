@@ -22,11 +22,10 @@ import javafx.stage.Stage;
 
 import java.io.*;
 import java.net.URL;
-import java.sql.Connection;
 import java.util.*;
 import java.util.regex.Pattern;
 
-public class CrudRedesignController implements Initializable  {
+public class MainProgramController implements Initializable  {
 
     ObservableList< String > yearLevelList = FXCollections.observableArrayList( "1", "2", "3", "4" );
     ObservableList< String > genderList = FXCollections.observableArrayList( "Male", "Female" );
@@ -63,9 +62,6 @@ public class CrudRedesignController implements Initializable  {
     private List<Student> students = new ArrayList<>();
     private Student selectedStudent;
     private Listen listener;
-
-    BufferedReader read = null;
-    BufferedWriter write = null;
 
     Database db;
 
