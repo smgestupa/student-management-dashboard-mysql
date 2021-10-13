@@ -15,8 +15,6 @@ public class Database {
         createStudentsTable();
     }
 
-    // THIS IS FOR SEARCH STUDENTS             final String command = "SELECT * FROM `students` where firstName REGEXP 'shawn'";;
-
     public Connection getConnection() {
         try {
             String url = "URL";
@@ -132,6 +130,38 @@ public class Database {
         } catch ( SQLException err ) {
             System.err.println( "Warning! SQLException has occurred in removeStudent() function: " + err.getMessage() );
         }
+    }
+
+    public List< Student > searchStudents( String keywords ) {
+        if ( con == null ) {
+            System.err.println( "Warning! Connection is null == you are not connected to the database!" );
+            return null;
+        }
+
+        List< Student > searchedStudents = new ArrayList<>();
+
+        try {
+            final String command = "select * from `students` where concat( studentNo, firstName, lastName, program ) REGEXP '" + keywords + "'";
+            final PreparedStatement searchStudents = con.prepareStatement( command );
+            final ResultSet response = searchStudents.executeQuery();
+
+            while ( response.next() ) {
+                searchedStudents.add( new Student(
+                        Integer.parseInt( response.getString( 1 ) ),
+                        response.getString( 2 ),
+                        response.getString( 3 ),
+                        Integer.parseInt( response.getString( 4 ) ),
+                        Integer.parseInt( response.getString( 5 ) ),
+                        response.getString( 6 ),
+                        response.getString( 7 ),
+                        response.getString( 8 ) )
+                );
+            }
+        } catch ( SQLException err ) {
+            System.err.println( "Warning! SQLException has occurred in searchStudents() function: " + err.getMessage() );
+        }
+
+        return searchedStudents;
     }
 
     public boolean checkIfDuplicate( int studentNumber ) {

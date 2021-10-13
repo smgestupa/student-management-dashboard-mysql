@@ -354,8 +354,6 @@ public class CrudRedesignController implements Initializable  {
 
     @FXML
     void confirmDeleteStudent() throws IOException {
-        boolean success = false;
-
         Alert confirm = new Alert( Alert.AlertType.CONFIRMATION );
         confirm.setTitle( "Confirmation Required" );
         confirm.setHeaderText( "Would you like to delete " + selectedStudent.getFirstName() + "'s entry?" );
@@ -388,44 +386,14 @@ public class CrudRedesignController implements Initializable  {
 
     @FXML
     void searchStudents() {
-        System.out.println( db.checkIfDuplicate( Integer.parseInt( searchField.getText().trim() ) ) );
-//        List< Student > students = new ArrayList<>();
-//
-//        if ( !searchField.getText().trim().isEmpty() ) {
-//            Task< Void > searchStudentsTask = new Task<Void>() {
-//                @Override
-//                protected Void call() throws Exception {
-//
-//                    try {
-//                        read = new BufferedReader(new FileReader("database/students-list.txt"));
-//                        String pattern = searchField.getText().replaceAll(" +", "|");
-//                        String s;
-//                        while ((s = read.readLine()) != null) {
-//                            if (!Pattern.compile(pattern, Pattern.CASE_INSENSITIVE).matcher(s).find()) continue;
-//
-//                            String[] entry = s.split("&");
-//                            students.add(new Student(Integer.parseInt(entry[0]), entry[1], entry[2], Integer.parseInt(entry[3]), Integer.parseInt(entry[4]), entry[5], entry[6], entry[7]));
-//                        }
-//
-//                            addStudents(students);
-//                        } catch(IOException err ){
-//                            System.err.println("Warning! IOException has occurred at searchStudents() function: " + err.getMessage());
-//                        } finally{
-//                            if (read != null) read.close();
-//                        }
-//
-//                        return null;
-//                    }
-//                };
-//
-//            searchStudentsTask.run();
-//        } else {
-//            addStudents( getStudents() );
-//        }
+        if ( searchField.getText().trim().isEmpty() ) return;
+
+        String pattern = searchField.getText().trim().replaceAll( " +", "|" );
+        addStudents( db.searchStudents( pattern ) );
     }
 
     @FXML
-    void sortStudents() throws IOException {
+    void sortStudents() {
         List< Student > currentList = new ArrayList<>();
         currentList.addAll( students );
         addStudents( currentList );
