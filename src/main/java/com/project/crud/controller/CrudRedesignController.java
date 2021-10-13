@@ -68,7 +68,6 @@ public class CrudRedesignController implements Initializable  {
     BufferedWriter write = null;
 
     Database db;
-    Connection con;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -83,46 +82,11 @@ public class CrudRedesignController implements Initializable  {
         sortingBox.getItems().addAll( sortingList );
         sortingBox.getSelectionModel().select( 0 );
 
-//        try {
-//            addStudents( getStudents() );
-//        } catch ( IOException err ) {
-//            System.err.println( "Warning! IOException has occurred at initialize() function: " + err.getMessage() );
-//        }
+        addStudents( getStudents() );
     }
 
-    public List< Student > getStudents() throws IOException {
-        List< Student > studentEntries = new ArrayList<>();
-
-        Task< Void > getStudentsTask = new Task< Void >() {
-            @Override
-            protected Void call() throws Exception {
-
-                List< Student > students = new ArrayList<>();
-
-                try {
-                    read = new BufferedReader( new FileReader( "database/students-list.txt" ) );
-
-                    String s;
-                    while ( ( s = read.readLine() ) != null ) {
-                        if ( s.trim().isEmpty() ) continue;
-
-                        String[] entry = s.split( "&" );
-                        students.add( new Student( Integer.parseInt( entry[0] ), entry[1], entry[2], Integer.parseInt( entry[3] ), Integer.parseInt( entry[4] ), entry[5], entry[6], entry[7] ) );
-                    }
-                } catch ( IOException err ) {
-                    System.err.println( "Warning! IOException has occurred at getStudents() function: " + err.getMessage() );
-                } finally {
-                    if ( read != null ) read.close();
-                    studentEntries.addAll( students );
-                }
-
-                return null;
-            }
-        };
-
-        getStudentsTask.run();
-
-        return studentEntries;
+    public List< Student > getStudents() {
+        return db.getStudents();
     }
 
     public void addStudents( List< Student > list ) {
@@ -279,7 +243,7 @@ public class CrudRedesignController implements Initializable  {
                         }
                     }
 
-                    db.insertStudents( studentId, firstName, lastName, yearLevel, age, gender, program, imagePath );
+                    db.insertStudent( studentId, firstName, lastName, yearLevel, age, gender, program, imagePath );
                     closePane();
 
                     Alert alert = new Alert( Alert.AlertType.INFORMATION );
@@ -341,183 +305,50 @@ public class CrudRedesignController implements Initializable  {
 
     }
 
-//    @FXML
-//    void addStudent() throws IOException {
-//        boolean isFilledOut =
-//                !studentIdField.getText().trim().isEmpty() &&
-//                !firstNameField.getText().trim().isEmpty() &&
-//                !lastNameField.getText().trim().isEmpty() &&
-//                !yearLevelBox.getSelectionModel().isEmpty() &&
-//                !ageField.getText().trim().isEmpty() &&
-//                !genderBox.getSelectionModel().isEmpty() &&
-//                !programBox.getSelectionModel().isEmpty();
-//
-//        if ( isFilledOut ) {
-//            boolean studentIdIsNumber = checkIfNumber( studentIdField.getText().trim() );
-//            boolean ageIsNumber = checkIfNumber( ageField.getText().trim() );
-//
-//            if ( studentIdIsNumber && ageIsNumber ) {
-////                boolean isDuplicate = checkDuplicate( studentIdField.getText() );
-//
-//                if ( !isDuplicate ) {
-//                    String studentId = studentIdField.getText().trim();
-//                    String firstName = firstNameField.getText().trim();
-//                    String lastName = lastNameField.getText().trim();
-//                    String yearLevel = yearLevelBox.getValue();
-//                    String age = ageField.getText().trim();
-//                    String gender = genderBox.getValue();
-//                    String program = programBox.getValue();
-//                    String imagePath = "null";
-//
-//                    if ( addStudentImage.getImage().getUrl() != null ) {
-//                        if ( Pattern.compile( "(\\w|\\d)+((\\.jpg)|(\\.jpeg)|(\\.png))" ).matcher( addStudentImage.getImage().getUrl() ).find() ) {
-//                            imagePath = addStudentImage.getImage().getUrl();
-//                        }
-//                    }
-//
-//                    try {
-//                        write = new BufferedWriter( new FileWriter( "database/students-list.txt", true ) );
-//                        write.append( studentId + "&" + firstName + "&" + lastName + "&" + yearLevel + "&" + age + "&" + gender + "&" + program + "&" + imagePath );
-//                        write.append( "\n" );
-//                    } catch ( IOException err ) {
-//                        System.err.println( "Warning! IOException has occurred at addStudent() function: " + err.getMessage() );
-//                    } finally {
-//                        if ( write != null ) write.close();
-//                    }
-//
-////                    addStudents( getStudents() );
-//                    closePane();
-//
-//                    Alert alert = new Alert( Alert.AlertType.INFORMATION );
-//                    alert.setTitle( "Success!" );
-//                    alert.setHeaderText( "You have successfully added a student." );
-//
-//                    DialogPane dialog = alert.getDialogPane();
-//                    dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css" ) ).toString() );
-//                    dialog.getStyleClass().add( "dialog" );
-//
-//                    alert.showAndWait();
-//                } else {
-//                    Alert alert = new Alert( Alert.AlertType.WARNING );
-//                    alert.setTitle( "Warning!" );
-//                    alert.setHeaderText( "A duplicate entry has been found." );
-//                    alert.setContentText( "You should edit the entry instead." );
-//
-//                    DialogPane dialog = alert.getDialogPane();
-//                    dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css" ) ).toString() );
-//                    dialog.getStyleClass().add( "dialog" );
-//
-//                    alert.showAndWait();
-//                }
-//            } else if ( !studentIdIsNumber ) {
-//                Alert alert = new Alert( Alert.AlertType.WARNING );
-//                alert.setTitle( "Warning!" );
-//                alert.setHeaderText( "The Student ID must be a number." );
-//                alert.setContentText( "Please try again." );
-//
-//                DialogPane dialog = alert.getDialogPane();
-//                dialog.getStylesheets().add( Objects.requireNonNull(getClass().getResource("/com/project/crud/styles/styles.css") ).toString() );
-//                dialog.getStyleClass().add( "dialog" );
-//
-//                alert.showAndWait();
-//            } else {
-//                Alert alert = new Alert( Alert.AlertType.WARNING );
-//                alert.setTitle( "Warning!" );
-//                alert.setHeaderText( "The student's age must be a number." );
-//                alert.setContentText( "Please try again." );
-//
-//                DialogPane dialog = alert.getDialogPane();
-//                dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
-//                dialog.getStyleClass().add( "dialog" );
-//
-//                alert.showAndWait();
-//            }
-//        } else {
-//            Alert alert = new Alert( Alert.AlertType.WARNING );
-//            alert.setTitle( "Warning!" );
-//            alert.setHeaderText( "You must fill up everything before adding an entry." );
-//            alert.setContentText( "Please try again." );
-//
-//            DialogPane dialog = alert.getDialogPane();
-//            dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
-//            dialog.getStyleClass().add( "dialog" );
-//
-//            alert.showAndWait();
-//        }
-//
-//    }
-
     @FXML
     void editStudent() throws IOException {
         boolean success = false;
+        boolean ageIsNumber = checkIfNumber( editAgeField.getText().trim() );
 
-        try {
-            read = new BufferedReader( new FileReader( "database/students-list.txt" ) );
-            StringBuilder fileContent = new StringBuilder();
+        if ( ageIsNumber ) {
+            String firstName = ( !editFirstNameField.getText().trim().isEmpty() ) ? editFirstNameField.getText().trim() : selectedStudent.getFirstName();
+            String lastName = ( !editLastNameField.getText().trim().isEmpty() ) ? editLastNameField.getText().trim() : selectedStudent.getLastName();
+            int yearLevel = ( !editYearLevelBox.getSelectionModel().isEmpty() ) ? Integer.parseInt( editYearLevelBox.getValue() ): selectedStudent.getYearLevel();
+            int age = ( !editAgeField.getText().trim().isEmpty() ) ? Integer.parseInt( editAgeField.getText().trim() ) :  selectedStudent.getAge();
+            String gender = ( !editGenderBox.getSelectionModel().isEmpty() ) ? editGenderBox.getValue() : selectedStudent.getGender();
+            String program = ( !editProgramBox.getSelectionModel().isEmpty() ) ? editProgramBox.getValue() : selectedStudent.getProgram();
+            String image = (editStudentImage.getImage().getUrl() != null) ? editStudentImage.getImage().getUrl() : "null";
 
-            boolean ageIsNumber = checkIfNumber( editAgeField.getText().trim() );
+            selectedStudent = new Student( selectedStudent.getStudentNumber(), firstName, lastName,  yearLevel,  age, gender, program , image );
+            db.updateStudent( selectedStudent.getStudentNumber(), firstName, lastName, yearLevel, age, gender, program, image );
 
-            if ( ageIsNumber ) {
-                    String s;
-                    while ((s = read.readLine()) != null) {
-                        if (Pattern.compile(String.valueOf(selectedStudent.getStudentNumber())).matcher(s).find()) {
-                            String firstName = (!editFirstNameField.getText().trim().isEmpty()) ? editFirstNameField.getText().trim() : selectedStudent.getFirstName();
-                            String lastName = (!editLastNameField.getText().trim().isEmpty()) ? editLastNameField.getText().trim() : selectedStudent.getLastName();
-                            String yearLevel = (!editYearLevelBox.getSelectionModel().isEmpty()) ? editYearLevelBox.getValue() : String.valueOf(selectedStudent.getYearLevel());
-                            String age = (!editAgeField.getText().trim().isEmpty()) ? editAgeField.getText().trim() : String.valueOf(selectedStudent.getAge());
-                            String gender = (!editGenderBox.getSelectionModel().isEmpty()) ? editGenderBox.getValue() : selectedStudent.getGender();
-                            String program = (!editProgramBox.getSelectionModel().isEmpty()) ? editProgramBox.getValue() : selectedStudent.getProgram();
+            success = true;
+        } else {
+            Alert alert = new Alert( Alert.AlertType.WARNING );
+            alert.setTitle( "Warning!" );
+            alert.setHeaderText( "The student's age must be a number." );
+            alert.setContentText( "Please try again." );
 
-                            String image = (editStudentImage.getImage().getUrl() != null) ? editStudentImage.getImage().getUrl() : "null";
+            DialogPane dialog = alert.getDialogPane();
+            dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
+            dialog.getStyleClass().add( "dialog" );
 
-                            selectedStudent = new Student( selectedStudent.getStudentNumber(), firstName, lastName, Integer.parseInt( yearLevel ), Integer.parseInt( age ), gender, program , image );
+            alert.showAndWait();
+        }
 
-                            fileContent.append( selectedStudent.getStudentNumber() + "&" + firstName + "&" + lastName + "&" + yearLevel + "&" + age + "&" + gender + "&" + program + "&" + image );
-                            fileContent.append("\n");
+        if ( success ) {
+            searchStudents();
+            closePane();
 
-                            continue;
-                        }
+            Alert alert = new Alert( Alert.AlertType.INFORMATION );
+            alert.setTitle( "Success!" );
+            alert.setHeaderText( "You have successfully edited a student entry." );
 
-                        fileContent.append(s);
-                        fileContent.append("\n");
-                    }
+            DialogPane dialog = alert.getDialogPane();
+            dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
+            dialog.getStyleClass().add( "dialog" );
 
-                    write = new BufferedWriter(new FileWriter("database/students-list.txt"));
-                    write.write(fileContent.toString());
-
-                    success = true;
-            } else {
-                Alert alert = new Alert( Alert.AlertType.WARNING );
-                alert.setTitle( "Warning!" );
-                alert.setHeaderText( "The student's age must be a number." );
-                alert.setContentText( "Please try again." );
-
-                DialogPane dialog = alert.getDialogPane();
-                dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
-                dialog.getStyleClass().add( "dialog" );
-
-                alert.showAndWait();
-            }
-        } catch ( IOException err ) {
-            System.err.println( "Warning! IOException has occurred at editStudent() function: " + err.getMessage() );
-        } finally {
-            if ( read != null ) read.close();
-            if ( write != null ) write.close();
-
-            if ( success ) {
-                searchStudents();
-                closePane();
-
-                Alert alert = new Alert( Alert.AlertType.INFORMATION );
-                alert.setTitle( "Success!" );
-                alert.setHeaderText( "You have successfully edited a student entry." );
-
-                DialogPane dialog = alert.getDialogPane();
-                dialog.getStylesheets().add( Objects.requireNonNull( getClass().getResource( "/com/project/crud/styles/styles.css") ).toString() );
-                dialog.getStyleClass().add( "dialog" );
-
-                alert.showAndWait();
-            }
+            alert.showAndWait();
         }
     }
 
@@ -579,7 +410,7 @@ public class CrudRedesignController implements Initializable  {
     }
 
     @FXML
-    void searchStudents() throws IOException {
+    void searchStudents() {
         System.out.println( db.checkIfDuplicate( Integer.parseInt( searchField.getText().trim() ) ) );
 //        List< Student > students = new ArrayList<>();
 //
