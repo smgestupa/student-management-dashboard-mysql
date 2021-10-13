@@ -240,6 +240,7 @@ public class MainProgramController implements Initializable  {
                     }
 
                     db.insertStudent( studentId, firstName, lastName, yearLevel, age, gender, program, imagePath );
+                    addStudents( getStudents() );
                     closePane();
 
                     Alert alert = new Alert( Alert.AlertType.INFORMATION );
@@ -382,7 +383,10 @@ public class MainProgramController implements Initializable  {
 
     @FXML
     void searchStudents() {
-        if ( searchField.getText().trim().isEmpty() ) return;
+        if ( searchField.getText().trim().isEmpty() ) {
+            addStudents( getStudents() );
+            return;
+        }
 
         String pattern = searchField.getText().trim().replaceAll( " +", "|" );
         addStudents( db.searchStudents( pattern ) );

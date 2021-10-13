@@ -103,7 +103,7 @@ public class Database {
         }
 
         try {
-            final String command = String.format( "update `students` set firstName = %s, lastName = %s, yearLevel = %d, age = %d, gender = %s, program = %s, imagePath = %s where studentNo = %d", updatedFirstName, updatedLastName, updatedYearLevel, updatedAge, updatedGender, updatedProgram, updatedImagePath, studentNumber  );
+            final String command = String.format( "update `students` set firstName = '%s', lastName = '%s', yearLevel = %d, age = %d, gender = '%s', program = '%s', imagePath = '%s' where studentNo = %d", updatedFirstName, updatedLastName, updatedYearLevel, updatedAge, updatedGender, updatedProgram, updatedImagePath, studentNumber  );
             final PreparedStatement updateStudent = con.prepareStatement( command );
             final int successful = updateStudent.executeUpdate();
 
