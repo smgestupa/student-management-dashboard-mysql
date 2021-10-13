@@ -94,7 +94,7 @@ public class Database {
             if ( successful == 1 ) System.out.println( "Successfully added a new entry into the `students` table." );
                 else System.err.println( "Something went wrong! You should check it out, maybe it's the database... or you!" );
         } catch ( SQLException err ) {
-            System.err.println( "Warning! SQLException has occurred in insertStudents() function: " + err.getMessage() );
+            System.err.println( "Warning! SQLException has occurred in insertStudent() function: " + err.getMessage() );
         }
     }
 
@@ -116,6 +116,24 @@ public class Database {
         }
     }
 
+    public void removeStudent( int studentNumber ) {
+        if ( con == null ) {
+            System.err.println( "Warning! Connection is null == you are not connected to the database!" );
+            return;
+        }
+
+        try {
+            final String command = "delete from `students` where studentNo = " + studentNumber;
+            final PreparedStatement removeStudent = con.prepareStatement( command );
+            final int successful = removeStudent.executeUpdate();
+
+            if ( successful == 1 ) System.out.println( "Successfully removed the entry with a student number " + studentNumber + " from the `students` table." );
+            else System.err.println( "Something went wrong! You should check it out, maybe it's the database... or you!" );
+        } catch ( SQLException err ) {
+            System.err.println( "Warning! SQLException has occurred in removeStudent() function: " + err.getMessage() );
+        }
+    }
+
     public boolean checkIfDuplicate( int studentNumber ) {
         if ( con == null ) {
             System.err.println( "Warning! Connection is null == you are not connected to the database!" );
@@ -129,7 +147,7 @@ public class Database {
 
             return hasDuplicate.next();
         } catch ( SQLException err ) {
-            System.err.println( "Warning! SQLException has occurred in insertStudents() function: " + err.getMessage() );
+            System.err.println( "Warning! SQLException has occurred in checkIfDuplicate() function: " + err.getMessage() );
         }
 
         return false;

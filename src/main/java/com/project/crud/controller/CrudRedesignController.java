@@ -70,7 +70,7 @@ public class CrudRedesignController implements Initializable  {
     Database db;
 
     @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
+    public void initialize( URL url, ResourceBundle resourceBundle ) {
         db = new Database();
 
         yearLevelBox.getItems().addAll( yearLevelList );
@@ -306,7 +306,7 @@ public class CrudRedesignController implements Initializable  {
     }
 
     @FXML
-    void editStudent() throws IOException {
+    void editStudent() {
         boolean success = false;
         boolean ageIsNumber = checkIfNumber( editAgeField.getText().trim() );
 
@@ -366,46 +366,23 @@ public class CrudRedesignController implements Initializable  {
 
         Optional< ButtonType > result = confirm.showAndWait();
         if ( result.get() == ButtonType.OK) {
-            try {
-                read = new BufferedReader( new FileReader( "database/students-list.txt" ) );
-                StringBuilder newFileContent = new StringBuilder();
+            db.removeStudent( selectedStudent.getStudentNumber() );
 
-                String s;
-                while ( ( s = read.readLine() ) != null ) {
-                    if ( Pattern.compile( String.valueOf( selectedStudent.getStudentNumber() ) ).matcher( s ).find() ) continue;
+            List< Student > updatedList = new ArrayList<>( students );
+            updatedList.remove( selectedStudent );
+            addStudents( updatedList );
+            closePane();
+            selectedStudent = null;
 
-                    newFileContent.append( s );
-                    newFileContent.append( "\n" );
-                }
+            Alert alert = new Alert( Alert.AlertType.INFORMATION );
+            alert.setTitle( "Success!" );
+            alert.setHeaderText( "You have successfully deleted a student entry." );
 
-                write = new BufferedWriter( new FileWriter( "database/students-list.txt" ) );
-                write.write( newFileContent.toString() );
+            DialogPane dialogSuccess = alert.getDialogPane();
+            dialogSuccess.getStylesheets().add( Objects.requireNonNull( getClass().getResource("/com/project/crud/styles/styles.css") ).toString() );
+            dialogSuccess.getStyleClass().add( "dialog" );
 
-                success = true;
-            } catch ( IOException err ) {
-                System.err.println( "Warning! IOException has occurred at confirmDeleteStudent() function: " + err.getMessage() );
-            } finally {
-                if ( read != null ) read.close();
-                if ( write != null ) write.close();
-
-                if ( success ) {
-                    List< Student > updatedList = new ArrayList<>( students );
-                    updatedList.remove( selectedStudent );
-                    addStudents( updatedList );
-                    closePane();
-                    selectedStudent = null;
-
-                    Alert alert = new Alert( Alert.AlertType.INFORMATION );
-                    alert.setTitle( "Success!" );
-                    alert.setHeaderText( "You have successfully deleted a student entry." );
-
-                    DialogPane dialogSuccess = alert.getDialogPane();
-                    dialogSuccess.getStylesheets().add( Objects.requireNonNull( getClass().getResource("/com/project/crud/styles/styles.css") ).toString() );
-                    dialogSuccess.getStyleClass().add( "dialog" );
-
-                    alert.showAndWait();
-                }
-            }
+            alert.showAndWait();
         }
     }
 
