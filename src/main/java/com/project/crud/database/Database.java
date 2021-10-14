@@ -55,7 +55,7 @@ public class Database {
                 );
             }
         } catch ( SQLException err ) {
-            System.err.println( "Warning! SQLException has occurred in getConnection() function: " + err.getMessage() );
+            System.err.println( "Warning! SQLException has occurred in getStudents() function: " + err.getMessage() );
         }
 
         return list;
@@ -74,7 +74,7 @@ public class Database {
             if ( tableExists == 0 ) System.out.println( "A `students` table already exists. Skipping..." );
                 else System.out.println( "A `students` table doesn't exist. Successfully created one!" );
         } catch ( SQLException err ) {
-            System.err.println( "Warning! SQLException has occurred in getConnection() function: " + err.getMessage() );
+            System.err.println( "Warning! SQLException has occurred in createStudentsTable() function: " + err.getMessage() );
         }
     }
 
@@ -110,7 +110,7 @@ public class Database {
             if ( successful == 1 ) System.out.println( "Successfully updated the entry with a student number " + studentNumber + " into the `students` table." );
             else System.err.println( "Something went wrong! You should check it out, maybe it's the database... or you!" );
         } catch ( SQLException err ) {
-            System.err.println( "Warning! SQLException has occurred in insertStudents() function: " + err.getMessage() );
+            System.err.println( "Warning! SQLException has occurred in updateStudent() function: " + err.getMessage() );
         }
     }
 
