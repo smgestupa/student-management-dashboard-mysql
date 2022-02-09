@@ -8,10 +8,7 @@ import java.util.List;
 
 public class Database {
 
-    Connection con;
-
     public Database() {
-        con = getConnection();
         createStudentsTable();
     }
 
@@ -31,13 +28,9 @@ public class Database {
     }
 
     public List< Student > getStudents() {
-        if ( con == null ) {
-            System.err.println( "Warning! Connection is null == you are not connected to the database!" );
-            return null;
-        }
-
         List< Student > list = new ArrayList<>();
-        try {
+
+        try ( final Connection con = getConnection() ) {
             final String command = "SELECT * FROM `students`";
             final PreparedStatement getStudents = con.prepareStatement( command );
             final ResultSet response = getStudents.executeQuery();
@@ -62,12 +55,7 @@ public class Database {
     }
 
     public void createStudentsTable() {
-        if ( con == null ) {
-            System.err.println( "Warning! Connection is null == you are not connected to the database!" );
-            return;
-        }
-
-        try {
+        try ( final Connection con = getConnection() ) {
             final PreparedStatement createTable = con.prepareStatement( "create table if not exists students ( studentNo int not null, firstName char(32) not null, lastName char(32) not null, yearLevel int not null, age int not null, gender char(10) not null, program char(64) not null, imagePath char(255) not null )" );
             final int tableExists = createTable.executeUpdate();
 
@@ -79,12 +67,7 @@ public class Database {
     }
 
     public void insertStudent( int studentNumber, String firstName, String lastName, int yearLevel, int age, String gender, String program, String imagePath ) {
-        if ( con == null ) {
-            System.err.println( "Warning! Connection is null == you are not connected to the database!" );
-            return;
-        }
-
-        try {
+        try ( final Connection con = getConnection() ) {
             final String command = String.format( "insert into students ( studentNo, firstName, lastName, yearLevel, age, gender, program, imagePath ) values ( %d, '%s', '%s', %d, %d, '%s', '%s', '%s' )", studentNumber, firstName, lastName, yearLevel, age, gender, program, imagePath );
             final PreparedStatement insertStudent = con.prepareStatement( command );
             final int successful = insertStudent.executeUpdate();
@@ -97,12 +80,7 @@ public class Database {
     }
 
     public void updateStudent( int studentNumber, String updatedFirstName, String updatedLastName, int updatedYearLevel, int updatedAge, String updatedGender, String updatedProgram, String updatedImagePath ) {
-        if ( con == null ) {
-            System.err.println( "Warning! Connection is null == you are not connected to the database!" );
-            return;
-        }
-
-        try {
+        try ( final Connection con = getConnection() ) {
             final String command = String.format( "update `students` set firstName = '%s', lastName = '%s', yearLevel = %d, age = %d, gender = '%s', program = '%s', imagePath = '%s' where studentNo = %d", updatedFirstName, updatedLastName, updatedYearLevel, updatedAge, updatedGender, updatedProgram, updatedImagePath, studentNumber  );
             final PreparedStatement updateStudent = con.prepareStatement( command );
             final int successful = updateStudent.executeUpdate();
@@ -115,12 +93,7 @@ public class Database {
     }
 
     public void removeStudent( int studentNumber ) {
-        if ( con == null ) {
-            System.err.println( "Warning! Connection is null == you are not connected to the database!" );
-            return;
-        }
-
-        try {
+        try ( final Connection con = getConnection() ) {
             final String command = "delete from `students` where studentNo = " + studentNumber;
             final PreparedStatement removeStudent = con.prepareStatement( command );
             final int successful = removeStudent.executeUpdate();
@@ -133,14 +106,9 @@ public class Database {
     }
 
     public List< Student > searchStudents( String keywords ) {
-        if ( con == null ) {
-            System.err.println( "Warning! Connection is null == you are not connected to the database!" );
-            return null;
-        }
-
         List< Student > searchedStudents = new ArrayList<>();
 
-        try {
+        try ( final Connection con = getConnection() ) {
             final String command = "select * from `students` where concat( studentNo, firstName, lastName, program ) REGEXP '" + keywords + "'";
             final PreparedStatement searchStudents = con.prepareStatement( command );
             final ResultSet response = searchStudents.executeQuery();
@@ -165,12 +133,7 @@ public class Database {
     }
 
     public boolean checkIfDuplicate( int studentNumber ) {
-        if ( con == null ) {
-            System.err.println( "Warning! Connection is null == you are not connected to the database!" );
-            return true;
-        }
-
-        try {
+        try ( final Connection con = getConnection() ){
             final String command = String.format( "select * from `students` where `studentNo` like %d", studentNumber );
             final PreparedStatement checkDuplicate = con.prepareStatement( command );
             final ResultSet hasDuplicate = checkDuplicate.executeQuery();
